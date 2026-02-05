@@ -1,0 +1,42 @@
+name: solar system workflow
+
+
+on:
+ push:
+    branches:
+        - feature_solarsystem_breansh
+env: 
+    Mongo_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+    MONGO_USERNAME: ${{ Vars.MONGO_USERNAME }}
+    MONGO_PASSRORD: ${{ secrets.MONGO_PASSWORD}}
+jobs:
+    unit_testing:
+        name: unit Testing
+        strategy:
+            matrix:
+                nodejs_version: [18,19,20]
+                operating_system: [ ubuntu-latest ]
+                
+                # exclude:
+                #     - nodejs_version: 18
+                #       operating_system: macos-latest
+        runs-on: ${{matrix.operating_system}}
+        steps:
+            - name: checkout Repository
+              uses: action/checkout@v4
+              
+            - name: Setup Nodejs Version - ${{ matrix.nodejs_version }}
+              uses: action/setup-node@v6.2.0
+              with:
+                node-version: ${{ matrix.nodejs_version }}  
+            - name: Install Dependencies
+              run: npm install
+            - name: Unit Testing
+              id: hamada
+              run: npm test
+            - name: Archive test result
+              if: steps.hamada.outcome == 'failure' || steps.hamada.outcome == 'success'
+              uses: actions/upload-artifact@v6
+              with:
+                name: Mocha-Test-Result-${{ matrix.nodejs_version }}-${{ matrix.operating_system }}
+                path: test-results.xml
